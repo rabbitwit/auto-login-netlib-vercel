@@ -78,9 +78,17 @@ export async function GET(request: Request) {
   });
   
   // 发送 Telegram 通知
+  let telegramSuccess = true;
+  let telegramMessage = '';
   if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
     const formattedMessage = formatTelegramMessage(summaryMessage);
-    await sendTelegramMessage(formattedMessage);
+    try {
+      await sendTelegramMessage(formattedMessage);
+    } catch (error: any) {
+      telegramSuccess = false;
+      telegramMessage = error.message;
+      console.log(`❌ Telegram 消息发送失败: ${error.message}`);
+    }
   } else {
     console.log('⚠️  Telegram 通知未配置，跳过发送');
   }
@@ -90,7 +98,11 @@ export async function GET(request: Request) {
   return NextResponse.json({
     success: true,
     message: summaryMessage,
-    results
+    results,
+    telegram: {
+      success: telegramSuccess,
+      message: telegramMessage
+    }
   });
 }
 
@@ -130,7 +142,10 @@ async function loginWithAccount(user: string, pass: string) {
           ]
         });
       } catch (playwrightError: any) {
-        throw new Error(`无法加载 Playwright: ${chromeError.message || playwrightError.message}`);
+        const errorMessage = `无法加载 Playwright: ${chromeError.message || playwrightError.message}`;
+        console.log(`❌ ${user} - ${errorMessage}`);
+        result.message = `❌ ${user} 登录异常: ${errorMessage}`;
+        return result;
       }
     }
     
@@ -223,11 +238,11 @@ async function sendTelegramMessage(message: string) {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.log(`❌ Telegram 消息发送失败: ${response.status} - ${errorText}`);
+      throw new Error(`Telegram API error: ${response.status} - ${errorText}`);
     } else {
       console.log('✅ Telegram 消息发送成功');
     }
   } catch (error: any) {
-    console.log(`❌ Telegram 消息发送异常: ${error.message}`);
+    throw new Error(`Telegram 消息发送异常: ${error.message}`);
   }
 }
