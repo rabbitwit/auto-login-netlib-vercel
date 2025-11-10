@@ -11,8 +11,5 @@
       "path": "/api/cron",
       "schedule": "0 0 */15 * *"
     }
-  ],
-  "env": {
-    "PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS": "1"
-  }
+  ]
 }
