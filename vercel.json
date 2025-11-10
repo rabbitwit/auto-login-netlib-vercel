@@ -11,5 +11,16 @@
       "path": "/api/cron",
       "schedule": "0 0 */15 * *"
     }
+  ],
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "node_modules/playwright/**"
+        ]
+      }
+    }
   ]
 }
