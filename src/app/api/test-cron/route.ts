@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import { chromium } from 'playwright';
-import { execSync } from 'child_process';
 
 // 超时配置常量
 const PAGE_DEFAULT_TIMEOUT = 30000;
@@ -102,32 +100,43 @@ async function loginWithAccount(user: string, pass: string) {
   let result = { user, success: false, message: '' };
   
   try {
-    // 在Vercel环境中尝试安装浏览器（如果尚未安装）
-    if (process.env.VERCEL === '1') {
+    // 动态导入 Playwright 相关模块
+    let chromium: any;
+    let browser: any;
+    
+    // 尝试导入 @sparticuz/chromium（用于 Vercel 环境）
+    try {
+      console.log(`🔧 ${user} - 尝试使用 @sparticuz/chromium 和 playwright-core`);
+      const sparticuzChromium = await import('@sparticuz/chromium');
+      const playwright = await import('playwright-core');
+      
+      chromium = sparticuzChromium.default;
+      browser = await playwright.chromium.launch({
+        args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        executablePath: await chromium.executablePath(),
+      });
+    } catch (chromeError: any) {
+      console.log(`🔧 ${user} - @sparticuz/chromium 不可用，尝试使用标准 playwright-core`);
+      
+      // 如果 @sparticuz/chromium 不可用，则使用标准 playwright-core
       try {
-        console.log(`🔧 ${user} - 尝试安装Playwright浏览器组件...`);
-        execSync('npx playwright install chromium', { stdio: 'pipe' });
-        console.log(`✅ ${user} - Playwright浏览器组件安装成功`);
-      } catch (installError: any) {
-        console.log(`⚠️ ${user} - Playwright浏览器组件安装失败: ${installError.message}`);
+        const playwright = await import('playwright-core');
+        browser = await playwright.chromium.launch({
+          headless: true,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage'
+          ]
+        });
+      } catch (playwrightError: any) {
+        throw new Error(`无法加载 Playwright: ${chromeError.message || playwrightError.message}`);
       }
     }
     
-    const browser = await chromium.launch({ 
-      headless: true,
-      args: [
-        '--no-sandbox', 
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu'
-      ]
-    });
-    
-    let page;
-    
     try {
-      page = await browser.newPage();
-      page.setDefaultTimeout(PAGE_DEFAULT_TIMEOUT);
+      const page = await browser.newPage();
+      await page.setDefaultTimeout(PAGE_DEFAULT_TIMEOUT);
       
       console.log(`📱 ${user} - 正在访问网站...`);
       await page.goto('https://www.netlib.re/', { waitUntil: 'networkidle' });
@@ -149,8 +158,7 @@ async function loginWithAccount(user: string, pass: string) {
       console.log(`📤 ${user} - 提交登录...`);
       await page.click('button:has-text("Validate"), input[type="submit"]');
       
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(SUCCESS_CHECK_TIMEOUT);
+      await page.waitForLoadState?.('networkidle') || await page.waitForTimeout(SUCCESS_CHECK_TIMEOUT);
       
       // 检查登录是否成功
       const pageContent = await page.content();
@@ -163,28 +171,14 @@ async function loginWithAccount(user: string, pass: string) {
         console.log(`❌ ${user} - 登录失败`);
         result.message = `❌ ${user} 登录失败`;
       }
+      
+      await page.close();
     } finally {
-      try {
-        if (page) await page.close();
-      } catch (closeError: any) {
-        console.log(`❌ ${user} - 页面关闭异常: ${closeError.message}`);
-      }
-      try {
-        await browser.close();
-      } catch (closeError: any) {
-        console.log(`❌ ${user} - 浏览器关闭异常: ${closeError.message}`);
-      }
+      await browser.close();
     }
   } catch (e: any) {
     console.log(`❌ ${user} - 登录异常: ${e.message}`);
-    // 尝试提供更具体的错误信息
-    if (e.message.includes('Executable doesn\'t exist') || 
-        e.message.includes('Host system is missing dependencies') ||
-        e.message.includes('playwright')) {
-      result.message = `❌ ${user} Playwright环境问题: ${e.message}`;
-    } else {
-      result.message = `❌ ${user} 登录异常: ${e.message}`;
-    }
+    result.message = `❌ ${user} 登录异常: ${e.message}`;
   }
   
   return result;
