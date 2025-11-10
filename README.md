@@ -241,3 +241,7 @@ curl -H "Authorization: Bearer my_local_secret_key_123" http://localhost:3000/ap
 # 或者测试端点
 curl -H "Authorization: Bearer my_local_secret_key_123" http://localhost:3000/api/test-cron
 ```
+
+## 致谢
+
+本项目在功能设计上受到了 [eooce/Auto-login-netlib](https://github.com/eooce/Auto-login-netlib) 项目的启发，特此致谢。两个项目在实现方式上有显著差异，本项目专为 Vercel 部署环境设计。
