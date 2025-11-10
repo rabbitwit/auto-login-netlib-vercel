@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { chromium } from 'playwright';
+import { execSync } from 'child_process';
 
 // 超时配置常量
 const PAGE_DEFAULT_TIMEOUT = 30000;
@@ -101,6 +102,17 @@ async function loginWithAccount(user: string, pass: string) {
   let result = { user, success: false, message: '' };
   
   try {
+    // 在Vercel环境中尝试安装浏览器（如果尚未安装）
+    if (process.env.VERCEL === '1') {
+      try {
+        console.log(`🔧 ${user} - 尝试安装Playwright浏览器组件...`);
+        execSync('npx playwright install chromium', { stdio: 'pipe' });
+        console.log(`✅ ${user} - Playwright浏览器组件安装成功`);
+      } catch (installError: any) {
+        console.log(`⚠️ ${user} - Playwright浏览器组件安装失败: ${installError.message}`);
+      }
+    }
+    
     const browser = await chromium.launch({ 
       headless: true,
       args: [
