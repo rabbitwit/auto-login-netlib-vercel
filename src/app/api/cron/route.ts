@@ -103,7 +103,12 @@ async function loginWithAccount(user: string, pass: string) {
   try {
     const browser = await chromium.launch({ 
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu'
+      ]
     });
     
     let page;
@@ -160,11 +165,11 @@ async function loginWithAccount(user: string, pass: string) {
     }
   } catch (e: any) {
     console.log(`❌ ${user} - 登录异常: ${e.message}`);
-    // 降级处理：如果Playwright无法运行，则模拟成功
-    if (e.message.includes('Executable doesn\'t exist') || e.message.includes('playwright')) {
-      console.log(`🔄 ${user} - Playwright不可用，使用降级处理`);
-      result.success = true;
-      result.message = `✅ ${user} 降级处理成功（Playwright不可用）`;
+    // 尝试提供更具体的错误信息
+    if (e.message.includes('Executable doesn\'t exist') || 
+        e.message.includes('Host system is missing dependencies') ||
+        e.message.includes('playwright')) {
+      result.message = `❌ ${user} Playwright环境问题: ${e.message}`;
     } else {
       result.message = `❌ ${user} 登录异常: ${e.message}`;
     }
