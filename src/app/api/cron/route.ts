@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// 添加这行来确保函数不会返回缓存的结果
+export const dynamic = 'force-dynamic';
+
 // 超时配置常量
 const PAGE_DEFAULT_TIMEOUT = 30000;
 const PAGE_WAIT_TIMEOUT = 3000;
