@@ -7,14 +7,13 @@
 要配置应用程序，请设置以下环境变量：
 
 - `ACCOUNTS`: 登录账号，格式为 `user1:pass1,user2:pass2`
-- `CRON_SCHEDULE`: （可选）自定义 cron 调度时间，默认为 `0 0 */15 * *`（每15天午夜执行）
 - `CRON_SECRET`: （推荐）用于保护 cron 端点的安全密钥，防止未经授权的访问
 
 ## 自定义 Cron 调度
 
 默认情况下，cron 作业设置为每15天运行一次（在午夜）。如果您想更改此设置而不修改代码，可以通过以下方式之一进行：
 
-1. Fork 此仓库并修改 `vercel.json` 中的调度表达式：
+Fork 此仓库并修改 `vercel.json` 中的调度表达式：
    ```json
    "crons": [
      {
@@ -22,12 +21,6 @@
        "schedule": "你的自定义调度表达式"
      }
    ]
-   ```
-
-2. 使用 Vercel CLI 部署时指定不同的调度时间：
-   ```bash
-   vercel env add CRON_SCHEDULE
-   # 然后在部署脚本中使用这个环境变量生成 vercel.json
    ```
 
 ## Cron 表达式示例
@@ -62,13 +55,11 @@
 3. 在 Vercel 项目设置中添加环境变量:
    - `ACCOUNTS`: 您的账号信息，格式为 `username1:password1,username2:password2`
 
-4. 部署完成后，系统将根据配置的 cron 表达式自动执行定时登录任务
+4. 部署完成后，去到 Settings > Cron Jobs 看到定时任务点击 Run 按钮启用
 
 ## 定时任务配置
 
 默认配置为每15天运行一次，可以通过修改 `vercel.json` 中的 `crons.schedule` 字段来调整：
-
-> **安全提醒**：为了防止未经授权的访问，强烈推荐配置 `CRON_SECRET` 环境变量。
 
 ```json
 {
@@ -79,26 +70,6 @@
     }
   ]
 }
-```
-
-### 通过环境变量自定义 Cron 调度
-
-为了方便用户自定义 cron 调度而无需修改代码仓库，我们提供了一种动态设置 cron 调度的方法：
-
-1. 在 Vercel 环境变量中添加 `CRON_SCHEDULE` 变量
-2. 设置所需的 cron 表达式作为值
-3. 部署时会自动使用该环境变量生成最终的 `vercel.json`
-
-例如，如果要设置为每6小时执行一次，可以设置：
-
-```
-CRON_SCHEDULE=0 */6 * * *
-```
-
-如果要恢复为每天执行一次，可以设置：
-
-```
-CRON_SCHEDULE=0 0 * * *
 ```
 
 ### Cron 表达式示例
@@ -119,7 +90,6 @@ CRON_SCHEDULE=0 0 * * *
 - `ACCOUNTS`: 要自动登录的账号列表，格式为 `username1:password1,username2:password2`
 - `TEST_ACCOUNTS`: 测试用账号列表 (可选，默认使用 ACCOUNTS)
 - `CRON_SECRET`: Cron 安全密钥 (推荐)，用于防止未经授权的访问
-- `CRON_SCHEDULE`: Cron 调度表达式 (可选，默认为 `0 0 */15 * *`)
 - `TELEGRAM_BOT_TOKEN`: Telegram 机器人 API Token (可选)
 - `TELEGRAM_CHAT_ID`: Telegram 接收消息的 Chat ID (可选)
 
@@ -196,9 +166,6 @@ TEST_ACCOUNTS=testuser:testpass
 
 # Cron 安全密钥（推荐）
 CRON_SECRET=my_local_secret_key_123
-
-# Cron 调度时间（可选）
-CRON_SCHEDULE=0 0 * * *
 
 # Telegram 机器人配置（可选）
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
