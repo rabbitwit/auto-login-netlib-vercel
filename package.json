@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "next build",
-    "vercel-build": "node scripts/generate-vercel-config.mjs && npm run build"
+    "prebuild": "node scripts/generate-vercel-config.mjs",
+    "build": "next build"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",
