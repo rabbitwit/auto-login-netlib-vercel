@@ -1,33 +1,33 @@
 #!/usr/bin/env node
 
-import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import fs from 'fs'
 
-// 读取基础配置模板
-const baseConfigPath = join(process.cwd(), 'vercel.base.json');
+const env = process.env.DEPLOY_ENV || 'dev'
+const cronSchedule = process.env.CRON_SCHEDULE;
 
-let baseConfig;
-
-try {
-  // 尝试读取基础配置文件
-  const baseConfigData = readFileSync(baseConfigPath, 'utf8');
-  baseConfig = JSON.parse(baseConfigData);
-} catch (err) {
-  console.error('❌ 找不到 vercel.base.json 基础配置文件');
-  process.exit(1);
+const baseConfig = {
+  version: 2,
+  routes: [{ src: "/", dest: "/" }]
 }
 
-// 获取环境变量中的 CRON_SCHEDULE，如果没有则使用默认值（每15天运行一次）
-const cronSchedule = process.env.CRON_SCHEDULE || '0 0 */15 * *';
-
-// 更新 cron 调度时间
-if (baseConfig.crons && baseConfig.crons.length > 0) {
-  console.log(`✏️ 更新 Cron 调度时间: ${cronSchedule}`);
-  baseConfig.crons[0].schedule = cronSchedule;
+// 根据环境变量修改配置
+if (env === 'prod') {
+  // 添加corn 任务
+  baseConfig.crons = [
+    {
+      path: '/api/cron',
+      schedule: cronSchedule
+    }
+  ]
+} else {
+  // 开发环境不添加cron任务
+  baseConfig.crons = [
+    {
+      path: '/api/cron',
+      schedule: '0 0 */15 * *'
+    }
+  ]
 }
 
-// 写入更新后的配置到 vercel.json
-const configPath = join(process.cwd(), 'vercel.json');
-writeFileSync(configPath, JSON.stringify(baseConfig, null, 2));
-
-console.log(`✅ Vercel 配置已生成，Cron 调度时间设置为: ${cronSchedule}`);
+fs.writeFileSync('vercel.json', JSON.stringify(baseConfig, null, 2))
+console.log(`✅ Vercel 配置已生成，Cron 调度时间设置为: ${cronSchedule}`)
